@@ -6,7 +6,6 @@ import random
 from typing import Callable
 from Crypto.Cipher import AES
 
-from challenge_07 import remove_padding
 from challenge_09 import pkcs7
 
 
