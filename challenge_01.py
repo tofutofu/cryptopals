@@ -36,7 +36,7 @@ def hex_to_base64_alt(hex_str: bytes) -> bytes:
 # The following functions are useful, however.
 #
 # Note: The docstrings for doctest need to be raw-strings (or escape the
-# backslashes), otherwise doctest may think they contain are null bytes!
+# backslashes), otherwise doctest errors because they contain null bytes!
 
 
 def bytes_to_hex(s: bytes, block_size: int = 0) -> str:
