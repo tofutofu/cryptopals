@@ -1,4 +1,4 @@
-# Cryptopals
+## Cryptopals
 
 These are my solutions to the [Cryptopals Challenges](https://cryptopals.com).
 
@@ -9,14 +9,14 @@ introduction can be found in  [Maciej Ceglowski](https://blog.pinboard.in/2013/0
 blog post.
 
 
-# Requirements
+## Requirements
 
 Python 3.10 or later.
 
 Run `pip install -r requirements.txt` or do a conda install of packages listed in requirements.txt.
 
 
-# Tests
+## Tests
 
 Most solutions have doctests. To run them all, run
 ```
