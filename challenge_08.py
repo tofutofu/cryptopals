@@ -25,11 +25,11 @@ from typing import Sequence
 
 
 def detect_ECB(
-    lines: Sequence[str | bytes], block_size: int = 16
+    lines: Sequence[str | bytes], blocksize: int = 16
 ) -> tuple[int, str | bytes]:
     duplicated = []
     for i, line in enumerate(lines):
-        blocks = to_blocks(line, block_size=block_size)
+        blocks = to_blocks(line, blocksize=blocksize)
         if has_duplicates(blocks):
             duplicated.append((i, line))
     if not duplicated:
@@ -42,8 +42,8 @@ def detect_ECB(
     return duplicated[0]
 
 
-def to_blocks(line: str | bytes, block_size: int = 16) -> list[str | bytes]:
-    return [line[i : i + block_size] for i in range(0, len(line), block_size)]
+def to_blocks(line: str | bytes, blocksize: int = 16) -> list[str | bytes]:
+    return [line[i : i + blocksize] for i in range(0, len(line), blocksize)]
 
 
 def has_duplicates(blocks: list) -> bool:
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         lines = f.readlines()
     lines = [line.strip() for line in lines if line.strip()]
 
-    lineno, line = detect_ECB(lines, block_size=32)
+    lineno, line = detect_ECB(lines, blocksize=32)
     if lineno == -1:
         print("Found no strings containing duplicated 16-byte blocks")
     else:

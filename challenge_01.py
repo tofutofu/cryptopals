@@ -39,7 +39,7 @@ def hex_to_base64_alt(hex_str: bytes) -> bytes:
 # backslashes), otherwise doctest errors because they contain null bytes!
 
 
-def bytes_to_hex(s: bytes | list[int], block_size: int = 0) -> str:
+def bytes_to_hex(s: bytes | list[int], blocksize: int = 0) -> str:
     r"""
     Convert a real bytes string into a prettier hex-string.
 
@@ -51,10 +51,10 @@ def bytes_to_hex(s: bytes | list[int], block_size: int = 0) -> str:
     '0007 4142 4241 4241 4142 0007'
     """
     res = "".join(f"{z:02x}" for z in s)
-    if not block_size:
+    if not blocksize:
         return res
     return " ".join(
-        res[i : i + 2 * block_size] for i in range(0, len(res), 2 * block_size)
+        res[i : i + 2 * blocksize] for i in range(0, len(res), 2 * blocksize)
     )
 
 

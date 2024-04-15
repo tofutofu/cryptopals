@@ -28,7 +28,9 @@ def encrypt(plaintext: str | bytes, key: str | bytes, rt: type = str) -> str | b
     raise ValueError(f"Invalid rt type ({rt}). Only str and bytes are supported.")
 
 
-def decrypt(ciphertext: str | bytes | list[int], key: str | bytes, rt: type = str) -> str | bytes:
+def decrypt(
+    ciphertext: str | bytes | list[int], key: str | bytes, rt: type = str
+) -> str | bytes:
     r"""
     Decrypt the ciphertext with repeated-key XOR.
 
