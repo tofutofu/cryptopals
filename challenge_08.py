@@ -6,16 +6,20 @@
 # Hint: ECB mode is stateless and deterministic. The same 16-byte plaintext block
 # always generates the same 16-byte ciphertext block.
 #
-# Let's just assume that the plaintext was in English. How to tackle this problem then?
-# If there is one string with a duplicate block, then that's our best candidate.
+# Approach: If there is one string with a duplicate block, then that's our best candidate.
 #
 # If no strings have duplicates, can we then find the target string? Would it make sense
-# to apply a distance metric on the ciphertexts - comparing ciphertext blocks?
+# to apply a distance metric on the ciphertexts, comparing ciphertext blocks?
 # It took me a while to realize that that doesn't make _much_ sense. It only makes sense
 # as a method to find duplicates...
 #
 # Does it make sense to use the total count of duplicates found in a line as as score
-# to compare lines? Not really...
+# to compare lines? Not really... If multiple string have duplicate blocks, it's not clear
+# why a string with more duplicates would be more likely to be ECB encrypted than a string
+# with fewer duplicates. There is no general reason to use this count as criterion.
+# It might actually be _less_ likely to find _more_ duplicate 16-byte blocks in a natural
+# language plaintext. And for relatively short string, I would assume that it is in fact
+# less likely.
 
 from typing import Sequence
 
