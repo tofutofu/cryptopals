@@ -1,6 +1,6 @@
 # Fixed XOR
 
-# The question suggests that pretty-printe hex strings should be taken as input.
+# The question suggests that pretty-printed hex strings should be taken as input.
 # In general it may be more convenient to take real byte-strings as input.
 
 
