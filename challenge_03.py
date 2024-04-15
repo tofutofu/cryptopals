@@ -19,11 +19,11 @@ from challenge_01 import hex_to_bytes
 # "English Letter Frequency Counts: Mayzner Revisited -- or ETAOIN SRHLDCU"
 # (http://norvig.com/mayzner.html)
 #
-# The table is also roughly the same as the table in the Wikipedia entry for
+# The table is roughly the same as the table in the Wikipedia entry for
 # English letter frequencies: https://en.wikipedia.org/wiki/Letter_frequency
 #
 # It turns out that to decrypt single-byte-XOR a rough single-letter
-# frequency score is enough.
+# frequency score is good enough.
 
 
 FREQ = """
