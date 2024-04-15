@@ -1,3 +1,10 @@
 # Cryptopals
 
-These are my solutions to the Cryptopals Challenges.
+These are my solutions to the [Cryptopals Challenges](https://cryptopals.com).
+
+This is a set of 48 practical programming problems that give you a hands-on
+crash course in understanding and breaking cryptographic ciphers. The problems
+are extremely fun to do, and most importantly - they are do-able. An excellent
+introduction can be found in  [Maciej Ceglowski](https://blog.pinboard.in/2013/04/the_matasano_crypto_challenges/)
+blog post.
+
