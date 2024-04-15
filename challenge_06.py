@@ -1,6 +1,7 @@
 # Break repeating-key XOR ("Vigenere")
 
 from base64 import b64decode
+import sys
 
 from challenge_03 import decrypt as decrypt_single_byte_XOR
 from challenge_03 import score_text
@@ -19,6 +20,7 @@ def decrypt(
 
     >>> score, key, plaintext = decrypt("data/6.txt")
     >>> assert score == -13375.38464213255
+    >>> assert len(key) == 29
     >>> assert plaintext.startswith("I'm back")
     """
 
@@ -39,7 +41,7 @@ def decrypt(
 
     masterkeys = []
 
-    for i, key_length in enumerate(key_lengths):
+    for i, key_length in enumerate(key_lengths[:10]):
         masterkey = ""
         plaintext = ""
         blocks = get_transposed_blocks(ciphertext, key_length)
@@ -51,11 +53,11 @@ def decrypt(
 
         if DEBUG:
             if " the " in plaintext:
-                tag = " <<<<<"
+                tag = "***** "
             else:
                 tag = ""
-            print(f"[{i}] Key: {masterkey!r}")
-            print(f"[{i}] Plaintext: {plaintext!r} ... {tag}")
+            print(f"{tag}[{i}] Key: {masterkey!r}", file=sys.stderr)
+            print(f"{tag}[{i}] Plaintext: {plaintext!r} ...", file=sys.stderr)
 
     #
     # Use the candidate keys to try to decrypt the original ciphertext.
@@ -69,7 +71,15 @@ def decrypt(
         score = score_text(plaintext)
         scored.append((score_text(plaintext), key, plaintext))
 
-    return sorted(scored)[-1]
+    res = sorted(scored)[-1]
+
+    if DEBUG:
+        print(file=sys.stderr)
+        print(f"Score: {res[0]:.3f}", file=sys.stderr)
+        print(f"Key: {res[1]!r}", file=sys.stderr)
+        print(f"Plaintext: {res[2][:45]!r}...", file=sys.stderr)
+
+    return res
 
 
 def get_sorted_key_lengths(
@@ -89,10 +99,12 @@ def get_sorted_key_lengths(
     res.sort()
 
     if DEBUG:
-        print("Sorted key_lengths")
+        print("Sorted key_lengths", file=sys.stderr)
         for i, (dist, key_length) in enumerate(res):
-            print(f"[{i}] key_length={key_length:2}  distance={dist:.3f}")
-        print()
+            print(
+                f"[{i}] key_length={key_length:2}  distance={dist:.3f}", file=sys.stderr
+            )
+        print(file=sys.stderr)
 
     return [key_length for (_, key_length) in res]
 
@@ -122,5 +134,9 @@ def get_transposed_blocks(ciphertext: bytes, key_length: int):
 
 if __name__ == "__main__":
     import doctest
+
+    if "-x" in sys.argv:
+        sys.argv.remove("-x")
+        DEBUG = True
 
     doctest.testmod()
