@@ -39,7 +39,7 @@ def hex_to_base64_alt(hex_str: bytes) -> bytes:
 # backslashes), otherwise doctest errors because they contain null bytes!
 
 
-def bytes_to_hex(s: bytes, block_size: int = 0) -> str:
+def bytes_to_hex(s: bytes | list[int], block_size: int = 0) -> str:
     r"""
     Convert a real bytes string into a prettier hex-string.
 
