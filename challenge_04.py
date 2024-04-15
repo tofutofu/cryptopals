@@ -13,6 +13,9 @@ from challenge_03 import decrypt
 
 def detect_single_byte_XOR(path: str = "data/4.txt") -> tuple[float, str, str]:
     """
+    Detect which line in the input file is mostly likely XOR-encrypted.
+    Returns a tuple (log_score, key, plaintext).
+
     >>> detect_single_byte_XOR()
     (-133.2429504586544, '5', 'Now that the party is jumping\n')
     """

@@ -81,9 +81,10 @@ DEFAULT_LOG_FREQ = -12
 assert DEFAULT_LOG_FREQ < LETTER_LOG_FREQUENCY["Z"]
 
 
-def decrypt(ciphertext: str | bytes) -> tuple[float, str, str]:
+def decrypt(ciphertext: str | bytes | list[int]) -> tuple[float, str, str]:
     """
     Decrypt a hex-string ciphertext that was encrypted by single-byte XOR.
+    Returns a tuple (score, key, plaintext).
 
     >>> s = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
     >>> decrypt(s)
@@ -92,12 +93,12 @@ def decrypt(ciphertext: str | bytes) -> tuple[float, str, str]:
     return max(score(ciphertext, byte) for byte in range(0, 256))
 
 
-def score(ciphertext: str | bytes, byte: int):
+def score(ciphertext: str | bytes | list[int], byte: int):
     res = dec(ciphertext, byte)
     return (score_text(res), chr(byte), res)
 
 
-def dec(ciphertext: str | bytes, byte: int) -> str:
+def dec(ciphertext: str | bytes | list[int], byte: int) -> str:
     if isinstance(ciphertext, str):
         ciphertext = hex_to_bytes(ciphertext)
     if isinstance(byte, bytes):
