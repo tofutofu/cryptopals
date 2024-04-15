@@ -12,7 +12,7 @@ from challenge_03 import decrypt
 
 
 def detect_single_byte_XOR(path: str = "data/4.txt") -> tuple[float, str, str]:
-    """
+    r"""
     Detect which line in the input file is mostly likely XOR-encrypted.
     Returns a tuple (log_score, key, plaintext).
 
