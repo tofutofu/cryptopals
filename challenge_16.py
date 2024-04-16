@@ -12,10 +12,6 @@
 # POODLE.
 #
 
-# A one-bit change in some ciphertext block, will lead to a
-# completely scrambled result in the corresponding decrypted block,
-# and to only one-bit-error in the next decrypted block.
-
 # So we start with
 #
 # |xxxxxxxxxxxxxxxx|x%3Badmin%3Dtrue|
@@ -37,7 +33,6 @@ from urllib.parse import quote, unquote
 
 from Crypto.Cipher import AES
 
-from challenge_01 import bytes_to_hex
 from challenge_09 import pkcs7, strip_pkcs7
 from challenge_15 import validate_pkcs7
 
@@ -62,56 +57,12 @@ def encrypt_payload(s: str, key: bytes = KEY) -> tuple[bytes, bytes]:
     return cipher.encrypt(plaintext), iv
 
 
-def decrypt_payload(
-    s: bytes, key: bytes = KEY, iv: bytes = b"", rt=bytes
-) -> str | bytes:
+def decrypt_payload(s: bytes, key: bytes = KEY, iv: bytes = b"", rt=bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_CBC, iv=iv or urandom(16))
     plaintext = cipher.decrypt(s)
     if validate_pkcs7(plaintext):
         plaintext = strip_pkcs7(plaintext)
-    if rt is str:
-        return safe_decode(plaintext)
     return plaintext
-
-
-def safe_decode(s: bytes):
-    filler = "?" * 16
-    prefix = ""
-    for i in range(0, len(s), 16):
-        try:
-            return prefix + s[i:].decode("utf-8")
-        except UnicodeDecodeError:
-            prefix += filler
-    raise ValueError(f"Failed to decode: {s!r}")
-
-
-def detect_admin(s: bytes, key: bytes = KEY, iv: bytes = b"") -> bool:
-    plaintext = decrypt_payload(s, key, iv)
-    return ";admin=true;" in plaintext
-
-
-def pp(s: bytes):  # pretty printer
-    print(bytes_to_hex(s, 8, 4))
-
-
-def flipbit(
-    s: bytes | list[int], block: int, byte: int, bit: int, blocksize: int = 16
-) -> bytes:
-    """
-    Flip one bit in the input bytes string.
-
-    The call `flipbit(s, -1, -1, 0)` flips bit 0 (least-significant bit) in
-    the last byte of the last block.
-    """
-    s = list(s)
-    assert -8 <= bit < 8
-    assert -blocksize <= byte < blocksize
-    bit = bit % 8
-    byte = byte % blocksize
-
-    s[block * blocksize + byte] ^= 1 << bit
-
-    return bytes(s)
 
 
 def malicious_payload():
