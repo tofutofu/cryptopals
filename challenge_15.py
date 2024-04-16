@@ -3,6 +3,13 @@
 from challenge_09 import pkcs7
 
 
+# Validation is fine. But it's problematic when an attacker can
+# probe a server as oracle and get to know that pkcs7 validation failed
+# (rather than that some general unspecific error occurred). And it's much
+# worse, if an attacker can get to see any of the exception messages
+# below (since they could reveal parts of a plaintext that should remain hidden)!
+
+
 def validate_pkcs7(s: bytes, blocksize: int = 16):
     r"""
     Validate PKCS#7 padding on input plaintext bytes.
@@ -31,7 +38,7 @@ def validate_pkcs7(s: bytes, blocksize: int = 16):
     >>> validate_pkcs7(s)
     Traceback (most recent call last):
       ...
-    ValueError: Last byte of plaint text (0xFF) is not in range 1 to 16
+    ValueError: Last byte of plain text (0xFF) is not in range 1 to 16
     """
 
     nbytes = len(s)
@@ -48,11 +55,14 @@ def validate_pkcs7(s: bytes, blocksize: int = 16):
     pad_byte = tail[-1]
     if pad_byte > blocksize:
         raise ValueError(
-            f"Last byte of plaint text (0x{pad_byte:02X}) is not in range 1 to {blocksize}"
+            f"Last byte of plain text (0x{pad_byte:02X}) is not in range 1 to {blocksize}"
         )
 
     expected = [pad_byte] * pad_byte
     if tail[-pad_byte:] != expected:
+        # NOTE: This message is debliberately leaking information.
+        # In a real system, this error message could be a security risk since it
+        # can reveal things to an attacker.
         raise ValueError(f"Plaintext has invalid padding: {bytes(tail)!r}")
 
     return True

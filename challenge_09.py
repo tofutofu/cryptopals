@@ -6,7 +6,7 @@
 
 def pkcs7(s: bytes, blocksize: int = 16) -> bytes:
     r"""
-    Apply PKC#7 padding to bytes string s.
+    Apply PKCS#7 padding to bytes string s.
 
     The input string is padded with (blocksize - (len(s) % blocksize)) pad bytes.
     The value of the pad byte is equal to the length of the padding. For instance,
@@ -26,6 +26,14 @@ def pkcs7(s: bytes, blocksize: int = 16) -> bytes:
 
     pad_byte = blocksize - (len(s) % blocksize)
     return s + bytes([pad_byte] * pad_byte)
+
+
+def strip_pkcs7(s: bytes, blocksize: int = 16) -> bytes:
+    """
+    Strip off PKCS#7 padding.
+    """
+    assert 0 < s[-1] <= blocksize
+    return s[: -s[-1]]
 
 
 if __name__ == "__main__":
