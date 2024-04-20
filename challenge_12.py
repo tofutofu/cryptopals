@@ -87,10 +87,10 @@ def uncover_target_length(oracle: Callable, blocksize: int) -> int:
 
 def probe(oracle: Callable, found: str, blocksize: int) -> str:
     # make a probe that is able to contain everything found so far
-    # and then still has at least one free cell
+    # and then still has exactly one more free cell
     nblocks = 1 + (len(found) // blocksize)
 
-    # point j to the last block of the probe
+    # point j to the last prefix block in the probes
     j = blocksize * (nblocks - 1)
 
     k = nblocks * blocksize - len(found) - 1
@@ -98,11 +98,11 @@ def probe(oracle: Callable, found: str, blocksize: int) -> str:
     prefix = [ord("A")] * k
     suffix = [ord(c) for c in found]
 
-    # let the oracle fill in the last letter of block j with the next,
-    # not-yet-discovered letter of the secret.
+    # let the oracle fill in the last letter of the prefix block
+    # with the next, not-yet-discovered letter of the secret
     target = oracle(bytes(prefix))
 
-    # run a brute-force attack to see which byte matches
+    # run a brute-force attack to see which byte matches the hidden letter
     for letter in range(256):
         ciphertext = oracle(bytes(prefix + suffix + [letter]))
         if ciphertext[j : j + blocksize] == target[j : j + blocksize]:
