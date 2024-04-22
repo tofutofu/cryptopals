@@ -5,12 +5,14 @@ import numpy as np
 # MT19937 - uses a 32-bit word length. Gets its name from Mersenne prime 2**19937 - 1.
 # It generates pseudo-random numbers in the range [0, 2**32 - 1].
 #
-# Wikipedia gives a pretty clear presentation of the algorithm.
+# Wikipedia gives a pretty clear presentation of the algorithm. The reference
+# implementation is even clearer.
 #
-# The Python implementation in CPython follows the algorithm. The seeding
-# has been made a bit more involved but follows the description in the
-# following reference:
+# The Python implementation in CPython basically just copies the original C-code
+# from the reference implementation. See:
+# http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/emt19937ar.html
 #
+# See also:
 # "Cryptographic Mersenne Twister and Fubuki Stream/Block Cipher",
 # Makoto Matsumoto, Takuji Nishimura, Mariko Hagita, and Mutsuo Saito (2005)
 # (https://eprint.iacr.org/2005/165.pdf)
@@ -19,15 +21,20 @@ import numpy as np
 # without reason. The other constant 1812433253 is a multiplier for a linear
 # congruential generator, here chosen without reason."
 #
-# My implementation is based on the Wikipedia description, and I confess to
-# also consulting a Chat GPT 3.5 implementation (which turned out to be pretty
-# decent). I then also compared the basic functions to the CPython core code
-# in Modules/_randommodule.c. To make testing and debugging easier I re-implemented
-# the seeding code from CPython (which follows the reference) plus the getstate and
-# setstate functions.
+# My implementation was first based on the Wikipedia description. I then debugged by
+# comparing to the CPython core code in Modules/_randommodule.c. To make testing and
+# debugging easier I also re-implemented some of the functions, like setstate and
+# getstate.
 #
-# The CPython random module does not cache the `seed` value. I do, just for convenience.
+# The CPython random module does not cache the `seed` value. I do, since the main
+# purpose here is to use this code for testing/learning about the properties of
+# this PRNG.
 #
+
+# Note: The internal state is implemented with 624 words, but the actual
+# state space is 623 words + 1 bit (19937 bits). In generating the next state
+# all bits of state[0] are ignored except the most significant bit.
+
 
 #
 # Constants and coefficients
@@ -50,21 +57,41 @@ LOWER_MASK = 0x7FFF_FFFF
 VERSION = 3
 
 
-def u32(x: int):
+def u32(x: int) -> int:
     return x & 0xFFFF_FFFF
 
 
+def int_to_u32_list(x: int) -> list[int]:
+    # returns a little-endian-like representation
+    res = []
+    if not x:
+        res = [0]
+    else:
+        while x:
+            res.append(u32(x))
+            x >>= 32
+    return res
+
+
 class MersenneTwister:
-    def __init__(self, seed: int | None = None):
+    def __init__(self, seed: int | list[int] | None = None):
+        """
+        Initialize MersenneTwister.
+
+        Argument seed can be either None or any non-negative integer,
+        or a list of 32-bit integers. If seed is None, we fallback to use 0.
+        If seed is an integer greater than 0xFFFF_FFFF, we break it up into
+        a list of 32-bit integers.
+        """
         if seed is None:
             seed = 0
-        assert 0 <= seed <= 0xFFFF_FFFF
-        self.seed = seed
+        self._seed = seed
         self.state = [0 for _ in range(_n)]
         self.index = _n
-        self.init_by_u32(seed)
+        self.init_by_array(seed)
 
-    def initialize(self, seed):
+    def initialize(self, seed: int):
+        assert 0 <= seed <= 0xFFFF_FFFF
         self.state[0] = seed
         for i in range(1, _n):
             self.state[i] = u32(
@@ -98,8 +125,10 @@ class MersenneTwister:
 
     def temper(self, y: int):
         # mix the bits of y
-        # the purpose is to approximate an equi-distribution of (MSB) bits
-        # so the returned value will appear "more random"
+        # the purpose is to approximate an equi-distribution of bits
+        # so single returned values will appear "more random";
+        # this function does _not_ increase the randomness of the generate
+        # sequence of numbers however
         y ^= y >> _u  #  & _d
         y ^= (y << _s) & _b
         y ^= (y << _t) & _c
@@ -149,27 +178,42 @@ class MersenneTwister:
             r = getrandbits(k)
         return r
 
-    def init_by_u32(self, seed: int):
+    def seed(self, val: int):
+        self.init_by_array(val)
+
+    def init_by_array(self, seeds: int | list[int]):
         #
-        # similar to CPython Modules/_randommodule.c init_by_array
-        # with the restriction that seed should be a uint32
+        # This uses the algorithm from the original code in
+        # http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/MT2002/CODES/mt19937ar.c
+        # (which is also copied in CPython Modules/_randommodule.c).
+        # It's here translated back into pure Python.
         #
 
-        assert 0 <= seed <= 0xFFFF_FFFF
+        if isinstance(seeds, int):
+            seeds = int_to_u32_list(seeds)
 
-        # init_by_array first does a regular state (re)init using as seed 19650218
+        assert all(0 <= seed <= 0xFFFF_FFFF for seed in seeds)
+        self._seed = seeds
+
         self.initialize(19650218)
 
         i = 1
+        j = 0
         state = self.state
-        for k in range(_n, 0, -1):
+        k = _n if _n > len(seeds) else len(seeds)
+        for _ in range(k, 0, -1):
             state[i] = u32(
-                (state[i] ^ ((state[i - 1] ^ (state[i - 1] >> 30)) * 1664525)) + seed
+                (state[i] ^ ((state[i - 1] ^ (state[i - 1] >> 30)) * 1664525))
+                + seeds[j]
+                + j
             )
             i += 1
+            j += 1
             if i >= _n:
                 state[0] = state[_n - 1]
                 i = 1
+            if j >= len(seeds):
+                j = 0
         for k in range(_n - 1, 0, -1):
             state[i] = u32(
                 (state[i] ^ ((state[i - 1] ^ (state[i - 1] >> 30)) * 1566083941)) - i
@@ -180,6 +224,11 @@ class MersenneTwister:
                 i = 1
 
         state[0] = 0x8000_0000
+
+
+#
+# Test functions - comparing to the Python stdlib random output
+#
 
 
 def test_init(seed=0):
