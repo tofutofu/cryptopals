@@ -36,7 +36,6 @@ def crack(x):
         mt.initialize(t)
         y = mt.generate()
         if y == x:
-            end = time.time()
             return t
 
     return None
