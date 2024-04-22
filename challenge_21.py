@@ -127,8 +127,9 @@ class MersenneTwister:
         # mix the bits of y
         # the purpose is to approximate an equi-distribution of bits
         # so single returned values will appear "more random";
-        # this function does _not_ increase the randomness of the generate
-        # sequence of numbers however
+        # this function does _not_ increase the randomness of the generated
+        # sequence of numbers however; the randomness of the sequence is
+        # completely encapsulated in the state
         y ^= y >> _u  #  & _d
         y ^= (y << _s) & _b
         y ^= (y << _t) & _c
