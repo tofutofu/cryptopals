@@ -30,7 +30,6 @@
 # Other questions: What is the nature of the `temper` function? Is it a bijection (in the set of
 # 32-bit non-negative integers)? Can the original seed be recovered?
 
-import random
 from challenge_21 import MersenneTwister
 
 
