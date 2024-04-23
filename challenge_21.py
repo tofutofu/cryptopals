@@ -1,5 +1,3 @@
-import numpy as np
-
 # Implement the MT19937 Mersenne Twister PRNG
 
 # MT19937 - uses a 32-bit word length. Gets its name from Mersenne prime 2**19937 - 1.
