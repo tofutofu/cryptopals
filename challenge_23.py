@@ -232,13 +232,17 @@ def untemper_using_z3(y: int) -> int:
 
 
 # With the `untemper` function we can now recover the internal state
-# of an MT19337 given the (consecutive) sequence of the last 624 generated numbers.
+# of an MT19337 given a (consecutive) sequence of 624 generated 32-bit integers.
 #
-# If we get _any_ (consecutive) sequence of 624 numbers, we can also clone the state.
-# But what is the index in that case?
-# (1) If we got the last generated batch of numbers, the index doesn't matter!
-# (2) If we got any batch, then we need one more randomly generated number
-# (generated any time after the first batch) to sync up.
+# If we get the last batch of generated integers, we clone the current state.
+# At that point we don't need to know the index. We can just set it to 624.
+#
+# The main reason we can do so, is that the states are defined by a cyclical
+# recurrence. One MT may have states (s0 s1 ... s623) and index 3, while another may
+# have states (s3 s4 ... s623 ... s626) and idex 0, and they will then generate the
+# same pseudo-random numbers. When the first one reaches `twist` and regenerates its
+# state, the first 3 numbers will then become (s624 s625 s626 ...) due to way the
+# twist is defined, so the PRNGs keep generating the same numbers.
 
 
 def clone(data: list[int]) -> MersenneTwister:
@@ -284,6 +288,11 @@ def break_mt2(seed: int = 20240401):
     assert mt.index == 3
 
     mt1 = clone(data)
+    assert mt1.index == 624
+
+    # the state of m1 is now shifted in regards to mt
+    # but the index is also shifted, so we still generate
+    # the same random numbers
 
     for _ in range(2000):
         assert mt1.generate() == mt.generate()
