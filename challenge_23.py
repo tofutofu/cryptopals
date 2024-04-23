@@ -86,7 +86,7 @@ class U32:
             return int((self._val & (1 << index)) != 0)
         if isinstance(index, slice):
             i, j, stride = index.indices(32)  # not doing extensive error checking
-            assert stride == 1  # only supporting continguous substrings
+            assert stride == 1  # only supporting contiguous substrings
             mask = ((1 << (j - i)) - 1) << i
             return (self._val & mask) >> i
         raise TypeError(
@@ -200,7 +200,7 @@ def untemper(y: int) -> int:
 
 
 def untemper_using_z3(y: int) -> int:
-    #
+
     # Source: https://blog.infosectcbr.com.au/2019/08/cryptopals-challenge-23-clone-mt19937.html
     # See also: https://www.schutzwerk.com/en/blog/attacking-a-rng/
     # (I made a minor modification to the original code.)
