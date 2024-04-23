@@ -123,7 +123,7 @@ class MersenneTwister:
             self.state[i] = self.state[(i + _m) % _n] ^ xA
         self.index = 0
 
-    def temper(self, y: int):
+    def temper(self, y: int) -> int:
         # mix the bits of y
         # the purpose is to approximate an equi-distribution of bits
         # so single returned values will appear "more random";
