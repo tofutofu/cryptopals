@@ -110,9 +110,7 @@ class MersenneTwister:
     def twist(self):
         # twist through the states and reset index to 0
         for i in range(_n):
-            x = u32(
-                (self.state[i] & UPPER_MASK) | (self.state[(i + 1) % _n] & LOWER_MASK)
-            )
+            x = (self.state[i] & UPPER_MASK) | (self.state[(i + 1) % _n] & LOWER_MASK)
             # apply twist transformation A
             if x & 1:
                 xA = (x >> 1) ^ _a
@@ -265,7 +263,7 @@ def test_generate(seed=0):
     random.seed(seed)
     mt = MersenneTwister(seed)
 
-    for _ in range(100):
+    for _ in range(1000):
         i = random.randint(0, 0xFFFF_FFFE)
         j = mt.randint(0, 0xFFFF_FFFE)
         assert i == j
