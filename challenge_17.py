@@ -60,11 +60,11 @@ def padding_oracle(s: bytes, key: bytes = KEY) -> bool:
     """
     iv, ciphertext = s[:16], s[16:]
     cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    plaintext = cipher.decrypt(s)
+    plaintext = cipher.decrypt(ciphertext)
     try:
         validate_pkcs7(plaintext)
         return True
-    except:
+    except ValueError:
         return False
 
 

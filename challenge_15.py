@@ -1,8 +1,5 @@
 # PKCS#7 padding validation
 
-from challenge_09 import pkcs7
-
-
 # Validation is fine. But it's problematic when an attacker can
 # probe a server as oracle and get to know that pkcs7 validation failed
 # (rather than that some general unspecific error occurred). And it's much
@@ -14,6 +11,7 @@ def validate_pkcs7(s: bytes, blocksize: int = 16):
     r"""
     Validate PKCS#7 padding on input plaintext bytes.
 
+    >>> from challenge_09 import pkcs7
     >>> s = b"ICE ICE BABY"
     >>> pkcs7(s)
     b'ICE ICE BABY\x04\x04\x04\x04'
@@ -44,7 +42,7 @@ def validate_pkcs7(s: bytes, blocksize: int = 16):
     nbytes = len(s)
 
     if len(s) == 0:
-        raise ValueError(f"Plaintext is empty")
+        raise ValueError("Plaintext is empty")
 
     if nbytes % blocksize != 0:
         raise ValueError(

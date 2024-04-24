@@ -199,7 +199,6 @@ def untemper(y: int) -> int:
 
 
 def untemper_using_z3(y: int) -> int:
-
     # Source: https://blog.infosectcbr.com.au/2019/08/cryptopals-challenge-23-clone-mt19937.html
     # See also: https://www.schutzwerk.com/en/blog/attacking-a-rng/
     # (I made a minor modification to the original code.)

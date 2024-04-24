@@ -68,7 +68,6 @@ def decrypt(
 
     for key in masterkeys:
         plaintext = decrypt_repeated_key_XOR(ciphertext, key)  # type: ignore
-        score = score_text(plaintext)
         scored.append((score_text(plaintext), key, plaintext))
 
     res = sorted(scored)[-1]

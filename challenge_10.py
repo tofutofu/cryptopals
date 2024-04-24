@@ -5,7 +5,7 @@
 from base64 import b64decode
 from Crypto.Cipher import AES
 
-from challenge_07 import decrypt as dec_aes_ecb, remove_padding
+from challenge_07 import remove_padding
 from challenge_09 import pkcs7
 
 
@@ -18,6 +18,7 @@ def enc_aes_ecb(plaintext: str | bytes, key: str | bytes) -> bytes:
     - The plaintext must be PKCS#7-padded since Cipher.encrypt
       does not add any padding.
 
+    >>> from challenge_07 import decrypt as dec_aes_ecb
     >>> plaintext = "Giant Eels Under Northern Seas"
     >>> key = "YELLOW SUBMARINE"
     >>> dec_aes_ecb(enc_aes_ecb(plaintext, key), key)

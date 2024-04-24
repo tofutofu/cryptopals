@@ -29,7 +29,7 @@
 
 from os import urandom
 import random
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 from Crypto.Cipher import AES
 

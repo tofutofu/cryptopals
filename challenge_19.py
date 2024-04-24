@@ -1,18 +1,10 @@
 # Break fixed-nonce CTR mode using substitutions
 
 from base64 import b64decode
-from collections import Counter
-from math import log2
 from os import urandom
-import random
-from Crypto.Cipher import AES
 
-from challenge_18 import (
-    int_to_bytes,
-    encrypt as ctr
-)
+from challenge_18 import encrypt as ctr
 
-from challenge_03 import LETTER_LOG_FREQUENCY
 
 # The following information is from https://www3.nd.edu/~busiforc/handouts/cryptography/Letter%20Frequencies.html
 #
@@ -43,10 +35,10 @@ BIGRAMS_ = """
 """
 
 BIGRAMS = dict()
-for line in BIGRAMS_.split('\n'):
+for line in BIGRAMS_.split("\n"):
     if not line.strip():
         continue
-    tokens = line.strip('%)')
+    tokens = line.strip("%)")
     BIGRAMS[tokens[1]] = float(tokens[-1])
 
 BIGRAMS[" t"] = 0.1594
@@ -96,13 +88,11 @@ TRIGRAMS_ = """
 20. tio (6425262, 0.378058%)
 """
 
-for line in TRIGRAMS_.split('\n'):
+for line in TRIGRAMS_.split("\n"):
     if not line.strip():
         continue
-    tokens = line.strip('%)')
+    tokens = line.strip("%)")
     TRIGRAMS[tokens[1]] = float(tokens[-1]) / 100.0
-
-
 
 
 DATA = b"""
@@ -148,10 +138,11 @@ VHJhbnNmb3JtZWQgdXR0ZXJseTo=
 QSB0ZXJyaWJsZSBiZWF1dHkgaXMgYm9ybi4=
 """
 
+
 def encrypt_data() -> list[bytes]:
     res = []
     key = b"(c)YELLOW MELLOW"
-    nonce = urandom(8)    
+    nonce = urandom(8)
     for line in DATA.strip().split(b"\n"):
         if not line:
             continue
@@ -159,11 +150,7 @@ def encrypt_data() -> list[bytes]:
         ciphertext = ctr(plaintext, key, nonce)
         res.append(ciphertext)
     return res
-                        
+
+
 def xor(a: bytes, b: bytes):
     return bytes(bytearray((x ^ y) for (x, y) in zip(a, b)))
-            
-
-            
-
-            
