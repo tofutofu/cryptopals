@@ -20,6 +20,7 @@ The exercises are bundled in 8 sets:
 8. Abstract Algebra (57-66)
 
 
+
 ## Requirements
 
 Python 3.10 or later.

@@ -5,6 +5,12 @@
 # "CTR mode encrypts a running counter, producing a 16 byte block of keystream,
 #  which is XOR'd against the plaintext."
 #
+#  Block cipher algorithm:
+#
+#    C = Encrypt(concat(Nonce, Counter), Key) ^ P
+#    P = Encrypt(concat(Nonce, Counter), Key) ^ C
+#
+
 
 from base64 import b64decode
 from typing import Generator
