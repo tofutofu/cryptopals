@@ -45,6 +45,13 @@ KEY = b"\xa1\x89\xf1/\xd4\x163b\xa5\xd6\x1f \xdc\xe8z\xda"
 
 
 def prepare_payload(s: str) -> str:
+    #
+    # The essential thing in this function is that the payload will always
+    # be urllib quoted. The output will never contain the literal string
+    # 'admin=true'. But since there are no length restrictions on the
+    # payload an attacker can still directly craft a ciphertext that will
+    # decrypt to a string that contains 'admin=true'.
+    #
     prefix = "comment1=cooking%20MCs;userdata="
     suffix = ";comment2=%20like%20a%20pound%20of%20bacon"
     return prefix + quote(s) + suffix

@@ -1,19 +1,28 @@
 # Implement a SHA-1 keyed MAC
 
+# SHA-1/Implement a SHA-1 keyed MAC
+#
 # SHA-1
+# -----
 #
 # Definition of the standard
 # https://csrc.nist.gov/files/pubs/fips/180-4/final/docs/draft-fips180-4_feb2011.pdf
 #
-# Short overview
+# Short overview (without technical details)
 # https://hamishgibbs.net/pages/understanding-sha-1-with-python/
 #
-# First collision report
+# First collision report (2017)
 # https://security.googleblog.com/2017/02/announcing-first-sha1-collision.html
 #
-# Download the implementation from The Algorithms:
+# A pure-Python implementation of SHA-1 can also be found in The Algorithms:
 # https://github.com/TheAlgorithms/Python/blob/3925b8155bebd84eababfba0f5a12e5129cfaa44/hashes/sha1.py
-
+#
+# I decided to implement it myself, based on the FIPS document and Wikipedia
+# to get a better understanding how all the parts fit together.
+#
+# MAC
+# ---
+#
 # From Wikipedia (https://en.wikipedia.org/wiki/Message_authentication_code):
 #
 #     A secure message authentication code must resist attempts by an adversary to forge tags,
@@ -22,9 +31,108 @@
 #     given message without knowledge of the key.
 #
 
-from os import urandom
 
-import sha1
+from os import urandom
+import struct
+
+
+def sha1(msg: bytes, rt: type | None = None) -> str | int:
+    """
+    Calculate the SHA-1 hash for a bytes string.
+
+    If `rt` is None, this returns the hexdigest as string. Otherwise, it
+    returns the hash value as Python integer.
+
+    Example:
+
+    >>> s = b'SHA-1 is vulnerable against chosen-prefix attacks'
+    >>> sha1(s)
+    '5d395522a042d7883ad0f221746a2b13cadfb5e4'
+    >>> import hashlib
+    >>> assert sha1(s) == hashlib.sha1(s).hexdigest()
+    """
+
+    if isinstance(msg, str):
+        raise TypeError("Strings must be encoded as bytes before hashing")
+
+    def u32(x: int) -> int:
+        return x & 0xFFFF_FFFF
+
+    def rotl(x: int, n: int = 1) -> int:
+        return u32((x << n) | (x >> (32 - n)))
+
+    def not_(x: int) -> int:
+        return x ^ 0xFFFF_FFFF
+
+    h0 = 0x67452301
+    h1 = 0xEFCDAB89
+    h2 = 0x98BADCFE
+    h3 = 0x10325476
+    h4 = 0xC3D2E1F0
+
+    # padding
+    ml = len(msg) << 3
+    k = abs(440 - ml) % 512
+
+    msg += b"\x80"
+    msg += b"\x00" * (k // 8)
+    msg += struct.pack(">Q", ml)
+    assert len(msg) % 64 == 0
+
+    for i in range(0, len(msg), 64):  # iterate over 512-bit (64-byte) blocks
+        block = msg[i : i + 64]
+
+        # break block into 16 words (32-bit unsigned integers)
+        words = [int.from_bytes(block[j : j + 4]) for j in range(0, 64, 4)]
+
+        # prepare message schedule (expand 16 words to 80 words)
+        for j in range(16, 80):
+            w = rotl(words[j - 3] ^ words[j - 8] ^ words[j - 14] ^ words[j - 16])
+            words.append(w)
+
+        # initialize hash values for block
+        a = h0
+        b = h1
+        c = h2
+        d = h3
+        e = h4
+
+        # main loop - iterate over words[j]
+        for j in range(80):
+            if j < 20:
+                f = (b & c) | (not_(b) & d)  # Ch
+                k = 0x5A827999
+            elif j < 40:
+                f = b ^ c ^ d  # Parity
+                k = 0x6ED9EBA1
+            elif j < 60:
+                f = (b & c) | (b & d) | (c & d)  # Maj
+                k = 0x8F1BBCDC
+            else:
+                f = b ^ c ^ d  # Parity
+                k = 0xCA62C1D6
+
+            # tmp is needed, since it depends on e
+            tmp = u32(words[j] + rotl(a, 5) + f + e + k)
+            e = d
+            d = c
+            c = rotl(b, 30)
+            b = a
+            a = tmp
+
+        # update intermediate hash values for message
+        h0 = u32(h0 + a)
+        h1 = u32(h1 + b)
+        h2 = u32(h2 + c)
+        h3 = u32(h3 + d)
+        h4 = u32(h4 + e)
+
+    # calculate final hash value (160-bit unsigned integer)
+    hh = (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
+
+    if rt is None:
+        return f"{hh:040x}"
+    return hh
 
 
 def generate(n: int) -> bytes:
@@ -38,31 +146,23 @@ def sign(msg: bytes, key: bytes) -> str:
     """
     Generate MAC (message authentication code), given a message and a key.
     """
-    return sha1.SHA1Hash(key + msg).final_hash()
+    return sha1(key + msg)  # type: ignore
 
 
-def verify(msg: bytes, tag: str | bytes, key: bytes) -> bool:
+def verify(msg: bytes, tag: str | bytes | int, key: bytes) -> bool:
     """
     Verify integrity of the message, given a MAC (tag) and a key.
     """
     if isinstance(tag, str):
-        return sha1.SHA1Hash(key + msg).final_hash() == tag
+        return sha1(key + msg) == tag
     elif isinstance(tag, bytes):
-        return hex_to_bytes(sha1.SHA1Hash(key + msg).final_hash()) == tag
+        return sha1(key + msg, rt=int).to_bytes(20) == tag  # type: ignore
+    elif isinstance(tag, int):
+        return sha1(key + msg, rt=int) == tag
     else:
         raise TypeError(
             f"Expected 'tag' to be a str or bytes, but got a {tag.__class__.__name__}"
         )
-
-
-def hex_to_bytes(s: str) -> bytes:
-    x = int(s, 16)
-    b = []
-    while x:
-        b.append(x & 0xFF)
-        x >>= 8
-    b += [0] * (20 - len(b))
-    return bytes(b[::-1])
 
 
 def test():
