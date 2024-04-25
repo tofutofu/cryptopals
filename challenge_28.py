@@ -1,7 +1,5 @@
-# Implement a SHA-1 keyed MAC
-
 # SHA-1/Implement a SHA-1 keyed MAC
-#
+
 # SHA-1
 # -----
 #
@@ -161,7 +159,7 @@ def verify(msg: bytes, tag: str | bytes | int, key: bytes) -> bool:
         return sha1(key + msg, rt=int) == tag
     else:
         raise TypeError(
-            f"Expected 'tag' to be a str or bytes, but got a {tag.__class__.__name__}"
+            f"Expected 'tag' to be a str, bytes or int, but got a {tag.__class__.__name__}"
         )
 
 
