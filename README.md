@@ -35,6 +35,11 @@ Many solutions have doctests. To run them all, run
 python -m doctest challenge_*.py --verbose
 ```
 
+## Style
+
+I ran all code through `ruff` and `black`. I generally also used typehints. Mypy didn't complain.
+The typehints may sometimes a bit unwieldy since I often couldn't decide if I wanted bytes or string
+or integers as arguments, which would then lead to "Oh, what the heck, let's support them all."
 
 
 
