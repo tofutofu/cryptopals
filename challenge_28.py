@@ -34,22 +34,23 @@ from os import urandom
 import struct
 
 
-# The initial_hash_values are constants in the standard SHA-1 definition.
-# They are exposed for the attack in challenge_29.
-
-
-def sha1(msg: bytes, rt: type | None = None, **initial_hash_values) -> str | int:
+def sha1(
+    msg: bytes, rt: type | None = None, hh: str | int | None = None, msg_len: int = 0
+) -> str | int:
     """
     Calculate the SHA-1 hash for a bytes string.
 
-    If `rt` is None, this returns the hexdigest as string. Otherwise, it
-    returns the hash value as Python integer.
+    Returns the hash value as hexdigest if `rt` is None. Otherwise, as Python integer.
+    Arguments `hh` and `msg_len` can be used to initialize the running state (the initial
+    hash values) and simulate a different message length.
 
     Example:
 
     >>> s = b'SHA-1 is vulnerable against chosen-prefix attacks'
     >>> sha1(s)
     '5d395522a042d7883ad0f221746a2b13cadfb5e4'
+    >>> hex(sha1(s, rt=int))
+    '0x5d395522a042d7883ad0f221746a2b13cadfb5e4'
     >>> import hashlib
     >>> assert sha1(s) == hashlib.sha1(s).hexdigest()
     >>> s = b''
@@ -70,25 +71,27 @@ def sha1(msg: bytes, rt: type | None = None, **initial_hash_values) -> str | int
     # Length of message should be smaller than 2**64 bits
     assert len(msg) < (1 << 61)
 
-    # initialize "constants"
-    h0 = initial_hash_values.get("h0", 0x67452301)
-    h1 = initial_hash_values.get("h1", 0xEFCDAB89)
-    h2 = initial_hash_values.get("h2", 0x98BADCFE)
-    h3 = initial_hash_values.get("h3", 0x10325476)
-    h4 = initial_hash_values.get("h4", 0xC3D2E1F0)
+    # initialize running state
+    if hh is not None:
+        if isinstance(hh, str):
+            hh = int(hh, 16)
+        h0 = u32(hh >> 128)
+        h1 = u32(hh >> 96)
+        h2 = u32(hh >> 64)
+        h3 = u32(hh >> 32)
+        h4 = u32(hh)
+    else:
+        h0 = 0x67452301
+        h1 = 0xEFCDAB89
+        h2 = 0x98BADCFE
+        h3 = 0x10325476
+        h4 = 0xC3D2E1F0
 
-    # padding
-    n = len(msg) + 1 + 8
-    k = 64 - (n % 64)
-    if k == 64:
-        k = 0
-    padding = b"\x80"
-    padding += b"\x00" * k
-    padding += struct.pack(">Q", len(msg) << 3)
-    assert len(msg + padding) % 64 == 0
-    msg += padding
+    # add padding
+    msg += padding(msg_len or len(msg))
 
-    for i in range(0, len(msg), 64):  # iterate over 512-bit (64-byte) blocks
+    # compress each block - iterates over the 512-bit (64-byte) blocks
+    for i in range(0, len(msg), 64):
         block = msg[i : i + 64]
 
         # break block into 16 words (32-bit unsigned integers)
@@ -130,7 +133,7 @@ def sha1(msg: bytes, rt: type | None = None, **initial_hash_values) -> str | int
             b = a
             a = tmp
 
-        # update intermediate hash values for message
+        # update "running state" (intermediate hash values) for message
         h0 = u32(h0 + a)
         h1 = u32(h1 + b)
         h2 = u32(h2 + c)
@@ -143,6 +146,33 @@ def sha1(msg: bytes, rt: type | None = None, **initial_hash_values) -> str | int
     if rt is None:
         return f"{hh:040x}"
     return hh
+
+
+def padding(msg_len: int) -> bytes:
+    """
+    SHA-1 padding.
+
+    - Append bit 1.
+    - Append k bits 0.
+    - Append the message length in bits as 64-bit big-endian integer.
+    - Ensure that the total length equals a multiple of 64 bytes (512 bits).
+
+    If ml is the message length in bits, then k should be the smallest
+    non-negative integer such that
+
+      ml + 1 + k + 64 ≡ 0 mod 512
+
+    """
+    n = msg_len + 1 + 8
+    k = 64 - (n % 64)
+    if k == 64:
+        k = 0
+
+    padding = b"\x80"
+    padding += b"\x00" * k
+    padding += struct.pack(">Q", msg_len << 3)
+    assert (msg_len + len(padding)) % 64 == 0
+    return padding
 
 
 def u32(x: int) -> int:
@@ -179,7 +209,7 @@ def verify(msg: bytes, tag: str | bytes | int, key: bytes) -> bool:
         )
 
 
-def test():
+def test1():
     msg = b"Yellow mellow"
     key = generate(20)
     tag = sign(msg, key)
@@ -202,5 +232,19 @@ def test():
     return True
 
 
+def test2():
+    s1 = b"ABC"
+    s2 = b"XYZ"
+    p1 = padding(len(s1))
+
+    hh = sha1(s1, rt=int)
+
+    target = sha1(s1 + p1 + s2)
+    actual = sha1(s2, hh=hh, msg_len=len(s1 + p1 + s2))
+
+    assert actual == target
+
+
 if __name__ == "__main__":
-    test()
+    test1()
+    test2()
