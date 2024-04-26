@@ -34,7 +34,11 @@ from os import urandom
 import struct
 
 
-def sha1(msg: bytes, rt: type | None = None) -> str | int:
+# The initial_hash_values are constants in the standard SHA-1 definition.
+# They are exposed for the attack in challenge_29.
+
+
+def sha1(msg: bytes, rt: type | None = None, **initial_hash_values) -> str | int:
     """
     Calculate the SHA-1 hash for a bytes string.
 
@@ -48,13 +52,14 @@ def sha1(msg: bytes, rt: type | None = None) -> str | int:
     '5d395522a042d7883ad0f221746a2b13cadfb5e4'
     >>> import hashlib
     >>> assert sha1(s) == hashlib.sha1(s).hexdigest()
+    >>> s = b''
+    >>> assert sha1(s) == hashlib.sha1(s).hexdigest()
+    >>> s = b'A' * 80 + b'Test'
+    >>> assert sha1(s) == hashlib.sha1(s).hexdigest()
     """
 
     if isinstance(msg, str):
         raise TypeError("Strings must be encoded as bytes before hashing")
-
-    def u32(x: int) -> int:
-        return x & 0xFFFF_FFFF
 
     def rotl(x: int, n: int = 1) -> int:
         return u32((x << n) | (x >> (32 - n)))
@@ -62,20 +67,26 @@ def sha1(msg: bytes, rt: type | None = None) -> str | int:
     def not_(x: int) -> int:
         return x ^ 0xFFFF_FFFF
 
-    h0 = 0x67452301
-    h1 = 0xEFCDAB89
-    h2 = 0x98BADCFE
-    h3 = 0x10325476
-    h4 = 0xC3D2E1F0
+    # Length of message should be smaller than 2**64 bits
+    assert len(msg) < (1 << 61)
+
+    # initialize "constants"
+    h0 = initial_hash_values.get("h0", 0x67452301)
+    h1 = initial_hash_values.get("h1", 0xEFCDAB89)
+    h2 = initial_hash_values.get("h2", 0x98BADCFE)
+    h3 = initial_hash_values.get("h3", 0x10325476)
+    h4 = initial_hash_values.get("h4", 0xC3D2E1F0)
 
     # padding
-    ml = len(msg) << 3
-    k = abs(440 - ml) % 512
-
-    msg += b"\x80"
-    msg += b"\x00" * (k // 8)
-    msg += struct.pack(">Q", ml)
-    assert len(msg) % 64 == 0
+    n = len(msg) + 1 + 8
+    k = 64 - (n % 64)
+    if k == 64:
+        k = 0
+    padding = b"\x80"
+    padding += b"\x00" * k
+    padding += struct.pack(">Q", len(msg) << 3)
+    assert len(msg + padding) % 64 == 0
+    msg += padding
 
     for i in range(0, len(msg), 64):  # iterate over 512-bit (64-byte) blocks
         block = msg[i : i + 64]
@@ -96,6 +107,7 @@ def sha1(msg: bytes, rt: type | None = None) -> str | int:
         e = h4
 
         # main loop - iterate over words[j]
+        # f is a non-linear function
         for j in range(80):
             if j < 20:
                 f = (b & c) | (not_(b) & d)  # Ch
@@ -131,6 +143,10 @@ def sha1(msg: bytes, rt: type | None = None) -> str | int:
     if rt is None:
         return f"{hh:040x}"
     return hh
+
+
+def u32(x: int) -> int:
+    return x & 0xFFFF_FFFF
 
 
 def generate(n: int) -> bytes:
