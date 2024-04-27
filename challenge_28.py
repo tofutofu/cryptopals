@@ -36,13 +36,16 @@ import struct
 
 def sha1(
     msg: bytes, rt: type | None = None, hh: str | int | None = None, msg_len: int = 0
-) -> str | int:
+) -> str | bytes | int:
     """
     Calculate the SHA-1 hash for a bytes string.
 
     Returns the hash value as hexdigest if `rt` is None. Otherwise, as Python integer.
     Arguments `hh` and `msg_len` can be used to initialize the running state (the initial
     hash values) and simulate a different message length.
+
+    The returned SHA-1 hash value has length 160 bits (20 bytes).
+    The internal block size is 512 bits (64 bytes).
 
     Example:
 
@@ -143,8 +146,10 @@ def sha1(
     # calculate final hash value (160-bit unsigned integer)
     hh = (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
 
-    if rt is None:
+    if rt is None or rt is str:  # hexdigest
         return f"{hh:040x}"
+    if rt is bytes:  # raw binary digest
+        return hh.to_bytes(20)
     return hh
 
 
