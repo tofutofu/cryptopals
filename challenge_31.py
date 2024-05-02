@@ -3,6 +3,8 @@
 import sys
 import time
 from typing import Callable
+import numpy as np
+
 from challenge_28 import sha1
 
 
@@ -49,6 +51,11 @@ def verify(msg: bytes, signature: str, key: bytes = KEY) -> bool:
 
 
 def insecure_compare(a: str | bytes, b: str | bytes, ms_delay: int = 50) -> bool:
+    #
+    # insecure because it's using an early exit which allows the timing attack
+    #
+    # this can trivially be made secure by always looking at _all_ of a and b
+    #
     assert ms_delay >= 0
     if len(a) != len(b):
         return False
@@ -73,33 +80,18 @@ def insecure_verify(
 # This breaks again, however, for ms_delay=5 (starts making mistakes
 # after solving about half).
 #
-# The funny thing is that it only breaks after a few steps.
-# So, one strategy is to gradually increase the nr of measurements.
+# If the delay is short then the variance in timings is greater, so
+# after a while it will start making mistakes. It may be best to
+# measure the stddev in each round and use that for determininig the
+# number of repeats to use in the next round. It's kind of hard to fine-tune
+# this so that it works for ms_delay < 5. The code below works for ms_delay == 5
+# but still makes mistakes for smaller delays.
 #
-# For ms_delay = 1 this still makes mistakes.
+# One way to deal with this, is to let the search run to the end, then
+# check, and backtrack. I got tired of the problem so didn't implement this.
 
 
-def find_mac(path: str = "challenge_31.py", ms_delay: int = 50):
-    def get_repeats(i: int):
-        if ms_delay >= 40:
-            return 1
-        if ms_delay >= 20:
-            if i < 20:
-                return 1
-            return 2
-        if ms_delay >= 10:
-            return 2
-        if ms_delay >= 5:
-            if i < 20:
-                return 2
-            return 3
-        # ms_delay < 5
-        if i < 20:
-            return 4
-        if i < 30:
-            return 5
-        return 6
-
+def find_mac(path: str = "challenge_31.py", ms_delay: int = 50, max_probes: int = 10):
     with open(path, "rb") as f:
         msg = f.read()
 
@@ -111,22 +103,46 @@ def find_mac(path: str = "challenge_31.py", ms_delay: int = 50):
     sys.stdout.write("Found:      ")
     sys.stdout.flush()
 
+    best = "?"
+    dt_offset = 0.0
+
     for i in range(40):
-        max_time = 0.0
-        best = "?"
-        repeats = get_repeats(i)
-        for c in "0123456789abcdef":
-            mac[i] = c
-            signature = "".join(mac)
-            dt = 0.0
-            for r in range(repeats):
+        for nn in range(max_probes):
+            timings = np.zeros(16)
+            for j, c in enumerate("0123456789abcdef"):
+                mac[i] = c
+                signature = "".join(mac)
                 start = time.time()
                 _ = insecure_verify(msg, signature, KEY, ms_delay=ms_delay)
-                end = time.time()
-                dt += end - start
-            if dt > max_time:
-                max_time = dt
-                best = c
+                timings[j] = time.time() - start
+
+            # normalize
+            timings = (timings - timings.mean()) / timings.std()
+
+            # find three best indices
+            k3, k2, k1 = timings.argpartition(-3)[-3:]
+            best = "0123456789abcdef"[k1]
+
+            m1 = timings[k1]
+
+            # thresholding
+            if m1 > 3.6:
+                break
+
+            m2 = timings[k2]
+            m3 = timings[k3]
+
+            timings.sort()
+            diffs = timings[1:] - timings[:-1]
+            diffs_avg = diffs.mean()
+            diffs_std = diffs.std()
+
+            d1 = (m1 - m2 - diffs_avg) / diffs_std
+            d2 = (m2 - m3 - diffs_avg) / diffs_std
+
+            if d1 > 2 * d2:
+                break
+
         mac[i] = best
         sys.stdout.write(best)
         sys.stdout.flush()

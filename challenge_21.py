@@ -33,6 +33,10 @@
 # state space is 623 words + 1 bit (19937 bits). In generating the next state
 # all bits of state[0] are ignored except the most significant bit.
 
+# References:
+# https://www.pcg-random.org/pdf/toms-oneill-pcg-family-v1.02.pdf
+# PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation
+# Very good overview of weaknesses in many PRNGs.
 
 #
 # Constants and coefficients
