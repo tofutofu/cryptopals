@@ -3,8 +3,8 @@
 These are my solutions to the [Cryptopals Challenges](https://cryptopals.com).
 
 This is a set of 48 practical programming problems that give you a hands-on
-crash course in understanding (and breaking!) cryptographic ciphers. The problems
-are fun to do, and most importantly - they are do-able. An excellent introduction
+crash course in understanding (and breaking) cryptographic ciphers. The problems
+are fun to do, and (most importantly) do-able. An excellent introduction
 can be found in [Maciej Ceglowski's](https://blog.pinboard.in/2013/04/the_matasano_crypto_challenges/)
 blog post.
 
@@ -38,7 +38,7 @@ python -m doctest challenge_*.py --verbose
 ## Style
 
 I ran all code through `ruff` and `black`. I generally also used typehints. Mypy didn't complain.
-The typehints may sometimes a bit unwieldy since I often couldn't decide if I wanted bytes or string
+The typehints may sometimes be a bit unwieldy since I often couldn't decide if I wanted bytes or string
 or integers as arguments, which would then lead to "Oh, what the heck, let's support them all."
 
 
