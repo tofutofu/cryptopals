@@ -19,7 +19,7 @@ The exercises are bundled in 8 sets:
 7. Hashes (49-56)
 8. Abstract Algebra (57-66)
 
-The most interesting challenges so far were challenge 21 and 22 that implement the 
+The most interesting challenges so far were challenges 21, 22, and 23, that implement the 
 [MT19937 Mersenne Twister](https://en.wikipedia.org/wiki/Mersenne_Twister) PRNG and show how to break it.
 This pseudo-random number generator  is very commonly used as a default PRNG (it's the default in the Python 
 stdlib for instance) and despite its astronomically large state space, it turns out to be shockingly easy to break. 
